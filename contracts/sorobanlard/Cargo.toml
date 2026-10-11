@@ -1,10 +1,10 @@
 [package]
-name = "hamplard"
+name = "sorobanlard"
 version = "0.1.0"
 edition = "2021"
 publish = false
-description = "Hamplard — On-chain course enrollment, payments, and certificate issuance on Stellar Soroban"
-authors = ["Hamplard Team"]
+description = "SorobanLard — On-chain course enrollment, payments, and certificate issuance on Stellar Soroban"
+authors = ["SorobanLard Team"]
 
 [lib]
 crate-type = ["cdylib"]

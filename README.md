@@ -1,12 +1,12 @@
-﻿# Hamplard — Contract Repo
+﻿# SorobanLard — Contract Repo
 
 > **On-chain course enrollment, payments, and certificate issuance on Stellar Soroban**
 
-Hamplard is an online learning platform for practical vocational skills — tailoring, makeup artistry, baking, photography, hairstyling, nail technology, fashion design, and more. This Soroban smart contract handles the trustless financial and credential layer of the platform: course enrollment payments, automatic instructor revenue splits, and verifiable on-chain certificates of completion.
+SorobanLard is an online learning platform for practical vocational skills — tailoring, makeup artistry, baking, photography, hairstyling, nail technology, fashion design, and more. This Soroban smart contract handles the trustless financial and credential layer of the platform: course enrollment payments, automatic instructor revenue splits, and verifiable on-chain certificates of completion.
 
 ## Short version
 
-Hamplard Contracts is the Soroban smart contract layer for the Hamplard platform. It manages course lifecycle state, enrollment payments, instructor revenue splits, certificate issuance, and revocation in a trustless and auditable way.
+SorobanLard Contracts is the Soroban smart contract layer for the SorobanLard platform. It manages course lifecycle state, enrollment payments, instructor revenue splits, certificate issuance, and revocation in a trustless and auditable way.
 
 The contract provides the core rules for:
 - registering and approving courses
@@ -31,13 +31,13 @@ The contract provides the core rules for:
 
 The detailed documentation below expands on the architecture, data model, contract functions, and deployment flow.
 
-This is **Repo 1 of 3** in the Hamplard project:
+This is **Repo 1 of 3** in the SorobanLard project:
 
 | Repo | Description |
 |------|-------------|
-| `hamplard-contract` ← you are here | Soroban smart contract (Rust) |
-| `hamplard-backend` | NestJS REST API + content management |
-| `hamplard-frontend` | Next.js student and instructor portal |
+| `sorobanlard-contract` ← you are here | Soroban smart contract (Rust) |
+| `sorobanlard-backend` | NestJS REST API + content management |
+| `sorobanlard-frontend` | Next.js student and instructor portal |
 
 ---
 
@@ -64,7 +64,7 @@ This is **Repo 1 of 3** in the Hamplard project:
 
 ## What the Contract Does
 
-The Hamplard contract is the trust layer for the platform. It handles three responsibilities:
+The SorobanLard contract is the trust layer for the platform. It handles three responsibilities:
 
 **1. Course Registry**
 Instructors register courses on-chain with a price and fee structure. Each course starts as `Pending` — an admin must approve it before students can enroll. This gives the platform moderation control without being able to move anyone's funds.
@@ -103,7 +103,7 @@ This keeps the contract small, cheap to call, and focused on what blockchains ar
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│                Hamplard Contract (Soroban)                    │
+│                SorobanLard Contract (Soroban)                    │
 │                                                              │
 │  ┌──────────────┐   ┌──────────────────┐   ┌─────────────┐  │
 │  │   Course     │   │   Enrollment     │   │ Certificate │  │
@@ -262,7 +262,7 @@ The platform fee percentage can be:
 
 ## Certificate Verification
 
-Any third party — an employer, a client, a government agency — can verify a Hamplard certificate without trusting the platform:
+Any third party — an employer, a client, a government agency — can verify a SorobanLard certificate without trusting the platform:
 
 ```bash
 stellar contract invoke \
@@ -299,13 +299,13 @@ The backend listens to these events and updates the database, sends notification
 ## Project Structure
 
 ```
-hamplard-contract/
+sorobanlard-contract/
 ├── Cargo.toml                         ← Rust workspace config
 ├── Cargo.lock
 ├── .gitignore
 ├── README.md
 └── contracts/
-    └── hamplard/
+    └── sorobanlard/
         ├── Cargo.toml                 ← Contract package config
         ├── Makefile                   ← Build / deploy shortcuts
         └── src/
@@ -335,8 +335,8 @@ stellar keys fund my-account --network testnet
 ## Setup & Installation
 
 ```bash
-git clone https://github.com/your-org/hamplard-contract.git
-cd hamplard-contract
+git clone https://github.com/your-org/sorobanlard-contract.git
+cd sorobanlard-contract
 cargo check
 ```
 
@@ -377,8 +377,8 @@ test test::test_update_platform_fee ...................... ok
 ## Building
 
 ```bash
-make build      # → target/wasm32v1-none/release/hamplard.wasm
-make optimize   # → target/wasm32v1-none/release/hamplard.optimized.wasm
+make build      # → target/wasm32v1-none/release/sorobanlard.wasm
+make optimize   # → target/wasm32v1-none/release/sorobanlard.optimized.wasm
 ```
 
 ---

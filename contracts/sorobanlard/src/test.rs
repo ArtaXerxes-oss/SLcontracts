@@ -24,7 +24,7 @@ fn setup() -> (Env, Address, Address, Address, Address, Address, Address) {
     let env = Env::default();
     env.mock_all_auths();
 
-    let contract_id = env.register(HamplardContract, ());
+    let contract_id = env.register(SorobanLardContract, ());
 
     // Deploy mock USDC token
     let token_admin = Address::generate(&env);
@@ -43,7 +43,7 @@ fn setup() -> (Env, Address, Address, Address, Address, Address, Address) {
     token_client.mint(&student, &100_000_000_000);
 
     // Init contract
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
     client.init(
         &admin, &sec_admin, &treasury, &20u32, &50u32, &1000u32, &17_280u32,
     ); // 20% fee, 50 courses max, 1000-ledger refund window, 17280-ledger revocation challenge period
@@ -62,7 +62,7 @@ fn setup() -> (Env, Address, Address, Address, Address, Address, Address) {
 
 fn register_and_approve_course(
     env: &Env,
-    client: &HamplardContractClient,
+    client: &SorobanLardContractClient,
     token_id: &Address,
     admin: &Address,
     instructor: &Address,
@@ -92,7 +92,7 @@ fn register_and_approve_course(
 /// and is used by issue_certificate to look up the enrollment.
 fn get_enrollment_ref(
     env: &Env,
-    client: &HamplardContractClient,
+    client: &SorobanLardContractClient,
     student: &Address,
     course_id: &str,
 ) -> String {
@@ -109,7 +109,7 @@ fn get_enrollment_ref(
 #[test]
 fn test_init_success() {
     let (env, contract_id, _token_id, admin, sec_admin, _treasury, _instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     // Platform fee should be 20%
     assert_eq!(client.get_platform_fee(&admin), 20);
@@ -118,7 +118,7 @@ fn test_init_success() {
 #[test]
 fn test_admin_instance_ttl_extended_on_admin_ops() {
     let (env, contract_id, token_id, admin, sec_admin, treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     env.ledger().with_mut(|l| {
         l.sequence_number += 50_000;
@@ -137,7 +137,7 @@ fn test_admin_instance_ttl_extended_on_admin_ops() {
 #[test]
 fn test_treasury_instance_ttl_extended_on_transfer_admin() {
     let (env, contract_id, token_id, admin, sec_admin, treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let new_admin = Address::generate(&env);
 
@@ -162,7 +162,7 @@ fn test_treasury_instance_ttl_extended_on_transfer_admin() {
 #[test]
 fn test_register_course_success() {
     let (env, contract_id, token_id, _admin, sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let course_id = String::from_str(&env, "COURSE-TAILORING-001");
     client.register_course(
@@ -186,7 +186,7 @@ fn test_register_course_success() {
 #[test]
 fn test_register_course_custom_fee() {
     let (env, contract_id, token_id, _admin, sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     client.register_course(
         &instructor,
@@ -208,7 +208,7 @@ fn test_register_course_custom_fee() {
 #[test]
 fn test_get_course_returns_none_for_nonexistent_id() {
     let (env, contract_id, _token_id, _admin, _sec_admin, _treasury, _instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let missing_id = String::from_str(&env, "COURSE-NOT-FOUND");
     assert!(client.get_course(&missing_id).is_none());
@@ -218,7 +218,7 @@ fn test_get_course_returns_none_for_nonexistent_id() {
 #[should_panic(expected = "course already registered")]
 fn test_register_duplicate_course() {
     let (env, contract_id, token_id, _admin, sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let course_id = String::from_str(&env, "COURSE-DUP");
     client.register_course(
@@ -250,7 +250,7 @@ fn test_register_duplicate_course() {
 #[test]
 fn test_approve_course_success() {
     let (env, contract_id, token_id, admin, sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let course_id = String::from_str(&env, "COURSE-BAKING-001");
     client.register_course(
@@ -273,7 +273,7 @@ fn test_approve_course_success() {
 #[should_panic(expected = "unauthorized: approve_course")]
 fn test_approve_course_unauthorized() {
     let (env, contract_id, token_id, _admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let course_id = String::from_str(&env, "COURSE-HAIR-001");
     client.register_course(
@@ -297,7 +297,7 @@ fn test_approve_course_unauthorized() {
 #[should_panic(expected = "course is not pending approval")]
 fn test_approve_already_active_course() {
     let (env, contract_id, token_id, admin, sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let course_id = String::from_str(&env, "COURSE-NAILS-001");
     client.register_course(
@@ -321,7 +321,7 @@ fn test_approve_already_active_course() {
 #[test]
 fn test_enroll_success_with_payment_split() {
     let (env, contract_id, token_id, admin, sec_admin, treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
     let token_client = token::Client::new(&env, &token_id);
 
     let student = Address::generate(&env);
@@ -382,7 +382,7 @@ fn test_enroll_success_with_payment_split() {
 #[should_panic(expected = "enrollment has not started for this course")]
 fn test_enroll_rejects_before_enrollment_start_ledger() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -407,7 +407,7 @@ fn test_enroll_rejects_before_enrollment_start_ledger() {
 #[test]
 fn test_enroll_succeeds_at_enrollment_start_ledger() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -442,7 +442,7 @@ fn test_enroll_succeeds_at_enrollment_start_ledger() {
 #[test]
 fn test_enroll_succeeds_when_instructor_is_contract_address() {
     let (env, contract_id, token_id, admin, _sec_admin, treasury, _instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
     let token_client = token::Client::new(&env, &token_id);
     let instructor_contract = env.register(NonReceivableInstructorContract, ());
     let instructor = instructor_contract.clone();
@@ -480,7 +480,7 @@ fn test_enroll_succeeds_when_instructor_is_contract_address() {
 #[test]
 fn test_enroll_uses_registered_course_fee_when_default_fee_changes() {
     let (env, contract_id, token_id, admin, _sec_admin, treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
     let token_client = token::Client::new(&env, &token_id);
 
     let student = Address::generate(&env);
@@ -525,7 +525,7 @@ fn test_enroll_uses_registered_course_fee_when_default_fee_changes() {
 #[test]
 fn test_enroll_fee_honors_registered_override_as_floor() {
     let (env, contract_id, token_id, admin, _sec_admin, treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
     let token_client = token::Client::new(&env, &token_id);
 
     let student = Address::generate(&env);
@@ -574,7 +574,7 @@ fn test_enroll_fee_honors_registered_override_as_floor() {
 #[test]
 fn test_enroll_zero_price_free_course() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
 
@@ -612,7 +612,7 @@ fn test_enroll_zero_price_free_course() {
 #[should_panic(expected = "overflow computing platform fee")]
 fn test_enroll_fee_overflow() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     // Choose a price large enough that price * 100 would overflow i128.
     // register_course now enforces a sane price range, so we register with
@@ -659,7 +659,7 @@ fn test_enroll_fee_overflow() {
 #[should_panic(expected = "already enrolled in this course")]
 fn test_enroll_duplicate() {
     let (env, contract_id, token_id, admin, sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -683,7 +683,7 @@ fn test_enroll_duplicate() {
 #[should_panic(expected = "admin cannot enroll in courses")]
 fn test_enroll_admin_rejected() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     token::StellarAssetClient::new(&env, &token_id).mint(&admin, &100_000_000_000);
 
@@ -704,7 +704,7 @@ fn test_enroll_admin_rejected() {
 #[test]
 fn test_enrollment_receipt_event_emitted_with_payment_breakdown() {
     let (env, contract_id, token_id, admin, sec_admin, treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -781,7 +781,7 @@ fn test_enrollment_receipt_event_emitted_with_payment_breakdown() {
 #[should_panic(expected = "course is not available for enrollment")]
 fn test_enroll_pending_course() {
     let (env, contract_id, token_id, _admin, sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -805,7 +805,7 @@ fn test_enroll_pending_course() {
 #[should_panic(expected = "cannot enroll in the same ledger the course was registered")]
 fn test_enroll_same_ledger_as_registration_rejected() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -833,7 +833,7 @@ fn test_enroll_same_ledger_as_registration_rejected() {
 #[should_panic(expected = "instructor cannot enroll in own course")]
 fn test_instructor_self_enrollment_rejected() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     // Fund instructor so they could pay if the guard were missing
     token::StellarAssetClient::new(&env, &token_id).mint(&instructor, &100_000_000_000);
@@ -855,7 +855,7 @@ fn test_instructor_self_enrollment_rejected() {
 #[test]
 fn test_is_enrolled_check() {
     let (env, contract_id, token_id, admin, sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -884,7 +884,7 @@ fn test_is_enrolled_check() {
 #[test]
 fn test_full_lifecycle_enroll_complete_certify() {
     let (env, contract_id, token_id, admin, sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -948,7 +948,7 @@ fn test_full_lifecycle_enroll_complete_certify() {
 #[test]
 fn test_certificate_issued_event_contains_full_issuance_details() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -1021,7 +1021,7 @@ fn test_certificate_issued_event_contains_full_issuance_details() {
 #[should_panic(expected = "student has not completed this course")]
 fn test_certificate_requires_completion() {
     let (env, contract_id, token_id, admin, sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -1054,7 +1054,7 @@ fn test_certificate_requires_completion() {
 #[test]
 fn test_revoke_certificate() {
     let (env, contract_id, token_id, admin, sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -1117,7 +1117,7 @@ fn test_revoke_certificate() {
 #[test]
 fn test_event_certificate_revoked() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -1205,7 +1205,7 @@ fn test_event_certificate_revoked() {
 #[test]
 fn test_revoke_certificate_metadata_persisted() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -1266,7 +1266,7 @@ fn test_revoke_certificate_metadata_persisted() {
 #[test]
 fn test_issue_certificate_with_instructor_signature() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -1311,7 +1311,7 @@ fn test_issue_certificate_with_instructor_signature() {
 #[test]
 fn test_issue_certificate_without_instructor_signature() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -1359,7 +1359,7 @@ fn test_issue_certificate_without_instructor_signature() {
 #[test]
 fn test_pause_and_unpause_course() {
     let (env, contract_id, token_id, admin, sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let course_id = String::from_str(&env, "COURSE-BAKING-001");
     register_and_approve_course(
@@ -1386,7 +1386,7 @@ fn test_pause_and_unpause_course() {
 #[should_panic(expected = "course is not active")]
 fn test_pause_course_double_pause_rejected() {
     let (env, contract_id, token_id, admin, sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let course_id = String::from_str(&env, "COURSE-DOUBLE-PAUSE");
     register_and_approve_course(
@@ -1411,7 +1411,7 @@ fn test_pause_course_double_pause_rejected() {
 #[test]
 fn test_update_platform_fee() {
     let (env, contract_id, _, admin, sec_admin, _, _) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     assert_eq!(client.get_platform_fee(&admin), 20);
     client.update_default_fee(&admin, &25u32);
@@ -1421,7 +1421,7 @@ fn test_update_platform_fee() {
 #[test]
 fn test_multiple_students_same_course() {
     let (env, contract_id, token_id, admin, sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     register_and_approve_course(
         &env,
@@ -1454,7 +1454,7 @@ fn test_multiple_students_same_course() {
 #[test]
 fn test_instructor_total_earnings_across_courses() {
     let (env, contract_id, token_id, admin, sec_admin, treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student_a = Address::generate(&env);
     let student_b = Address::generate(&env);
@@ -1509,7 +1509,7 @@ fn test_instructor_total_earnings_across_courses() {
 #[test]
 fn test_mark_completed_no_evidence_requires_student_auth() {
     let (env, contract_id, token_id, admin, sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &1_000_000_000);
 
@@ -1547,7 +1547,7 @@ fn test_mark_completed_no_evidence_requires_student_auth() {
 #[test]
 fn test_mark_completed_with_evidence_does_not_require_student_auth() {
     let (env, contract_id, token_id, admin, sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &1_000_000_000);
 
@@ -1592,7 +1592,7 @@ fn test_mark_completed_with_evidence_does_not_require_student_auth() {
 #[should_panic(expected = "enrollment course_id mismatch")]
 fn test_mark_completed_rejects_mismatched_enrollment_course_id() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
     let student = Address::generate(&env);
 
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &1_000_000_000);
@@ -1634,7 +1634,7 @@ fn test_mark_completed_rejects_mismatched_enrollment_course_id() {
 #[should_panic(expected = "course must be paused before archiving")]
 fn test_archive_course_blocked_by_active_enrollment() {
     let (env, contract_id, token_id, admin, sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &1_000_000_000);
 
@@ -1657,7 +1657,7 @@ fn test_archive_course_blocked_by_active_enrollment() {
 #[test]
 fn test_archive_course_with_refunds() {
     let (env, contract_id, token_id, admin, sec_admin, treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
     let student_a = Address::generate(&env);
     let student_b = Address::generate(&env);
 
@@ -1723,7 +1723,7 @@ fn test_archive_course_with_refunds() {
 #[test]
 fn test_archive_course_incremental_refunds() {
     let (env, contract_id, token_id, admin, sec_admin, treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let mut students: std::vec::Vec<Address> = std::vec::Vec::new();
     for _ in 0..5 {
@@ -1784,7 +1784,7 @@ fn test_archive_course_incremental_refunds() {
 #[should_panic(expected = "exceeds maximum allowed")]
 fn test_archive_course_rejects_oversized_refund_list() {
     let (env, contract_id, token_id, admin, sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let price = 500_000_000;
     register_and_approve_course(
@@ -1801,7 +1801,7 @@ fn test_archive_course_rejects_oversized_refund_list() {
     client.pause_course(&admin, &course_id);
 
     let mut too_many = soroban_sdk::Vec::new(&env);
-    for _ in 0..(HamplardContract::MAX_STUDENTS_TO_REFUND + 1) {
+    for _ in 0..(SorobanLardContract::MAX_STUDENTS_TO_REFUND + 1) {
         let s = Address::generate(&env);
         too_many.push_back(s);
     }
@@ -1814,7 +1814,7 @@ fn test_archive_course_rejects_oversized_refund_list() {
 #[should_panic]
 fn test_enroll_insufficient_funds_rollback() {
     let (env, contract_id, token_id, admin, sec_admin, treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
     let token_client = token::Client::new(&env, &token_id);
     let student = Address::generate(&env);
 
@@ -1844,7 +1844,7 @@ fn test_enroll_insufficient_funds_rollback() {
 #[test]
 fn test_treasury_update_delay() {
     let (env, contract_id, token_id, admin, sec_admin, treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
     let token_client = token::Client::new(&env, &token_id);
     let student_1 = Address::generate(&env);
     let student_2 = Address::generate(&env);
@@ -1891,7 +1891,7 @@ fn test_treasury_update_delay() {
 #[should_panic(expected = "new treasury address must differ from current treasury")]
 fn test_update_treasury_same_address_rejected() {
     let (env, contract_id, token_id, admin, sec_admin, treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     // Try to update treasury to the same address
     client.update_treasury(&admin, &sec_admin, &treasury);
@@ -1905,7 +1905,7 @@ fn test_update_treasury_same_address_rejected() {
 #[should_panic(expected = "course_id exceeds maximum length")]
 fn test_register_course_id_too_long() {
     let (env, contract_id, token_id, admin, sec_admin, treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let long_id = String::from_str(&env, &"A".repeat(257));
     client.register_course(
@@ -1923,7 +1923,7 @@ fn test_register_course_id_too_long() {
 #[test]
 fn test_register_course_id_at_max_length_succeeds() {
     let (env, contract_id, token_id, admin, sec_admin, treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let max_id = String::from_str(&env, &"A".repeat(256));
     client.register_course(
@@ -1944,7 +1944,7 @@ fn test_register_course_id_at_max_length_succeeds() {
 #[should_panic(expected = "course_title exceeds maximum length")]
 fn test_issue_certificate_title_too_long() {
     let (env, contract_id, token_id, admin, sec_admin, treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &1_000_000_000);
 
@@ -1983,7 +1983,7 @@ fn test_issue_certificate_title_too_long() {
 #[should_panic(expected = "certificate_id exceeds maximum length")]
 fn test_issue_certificate_id_too_long() {
     let (env, contract_id, token_id, admin, sec_admin, treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &1_000_000_000);
 
@@ -2026,7 +2026,7 @@ fn test_issue_certificate_id_too_long() {
 #[should_panic(expected = "course must be paused before archiving")]
 fn test_archive_active_course_rejected() {
     let (env, contract_id, token_id, admin, sec_admin, treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     register_and_approve_course(
         &env,
@@ -2047,7 +2047,7 @@ fn test_archive_active_course_rejected() {
 #[should_panic(expected = "course must be paused before archiving")]
 fn test_archive_pending_course_rejected() {
     let (env, contract_id, token_id, admin, sec_admin, treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     client.register_course(
         &instructor,
@@ -2072,7 +2072,7 @@ fn test_archive_pending_course_rejected() {
 #[test]
 fn test_archive_paused_course_succeeds() {
     let (env, contract_id, token_id, admin, sec_admin, treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     register_and_approve_course(
         &env,
@@ -2098,7 +2098,7 @@ fn test_archive_paused_course_succeeds() {
 #[should_panic(expected = "contract already initialized")]
 fn test_init_cannot_be_called_twice() {
     let (env, contract_id, _, admin, sec_admin, treasury, _) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
     // Second init call must be rejected
     client.init(
         &admin, &sec_admin, &treasury, &20u32, &50u32, &1000u32, &17_280u32,
@@ -2113,7 +2113,7 @@ fn test_init_cannot_be_called_twice() {
 #[should_panic(expected = "course token is not approved")]
 fn test_enroll_with_non_whitelisted_token_fails() {
     let (env, contract_id, _, admin, sec_admin, _, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     // Create a second token that has NOT been whitelisted
     let evil_token_admin = Address::generate(&env);
@@ -2146,7 +2146,7 @@ fn test_enroll_with_non_whitelisted_token_fails() {
 #[test]
 fn test_enroll_succeeds_after_token_removed_from_whitelist_is_re_added() {
     let (env, contract_id, token_id, admin, sec_admin, _, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     register_and_approve_course(
         &env,
@@ -2177,7 +2177,7 @@ fn test_enroll_succeeds_after_token_removed_from_whitelist_is_re_added() {
 #[should_panic(expected = "certificate ID already exists")]
 fn test_certificate_id_collision_across_courses() {
     let (env, contract_id, token_id, admin, sec_admin, _, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     register_and_approve_course(
         &env,
@@ -2252,7 +2252,7 @@ fn test_certificate_id_collision_across_courses() {
 #[test]
 fn test_two_step_admin_transfer_success() {
     let (env, contract_id, _, admin, sec_admin, _, _) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let new_admin = Address::generate(&env);
 
@@ -2272,7 +2272,7 @@ fn test_two_step_admin_transfer_success() {
 #[should_panic(expected = "no pending admin")]
 fn test_accept_admin_without_proposal_fails() {
     let (env, contract_id, _, _, sec_admin, _, _) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let random = Address::generate(&env);
     // No transfer_admin() called — must panic
@@ -2284,7 +2284,7 @@ fn test_accept_admin_without_proposal_fails() {
 #[should_panic(expected = "callers are not the pending admins")]
 fn test_accept_admin_wrong_address_fails() {
     let (env, contract_id, _, admin, sec_admin, _, _) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let new_admin = Address::generate(&env);
     let wrong_addr = Address::generate(&env);
@@ -2301,7 +2301,7 @@ fn test_accept_admin_wrong_address_fails() {
 #[should_panic(expected = "unauthorized: update_default_fee")]
 fn test_old_admin_loses_access_after_transfer_completes() {
     let (env, contract_id, _, admin, sec_admin, _, _) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let new_admin = Address::generate(&env);
 
@@ -2320,7 +2320,7 @@ fn test_old_admin_loses_access_after_transfer_completes() {
 #[test]
 fn test_old_admin_rejected_for_all_admin_only_functions_after_transfer() {
     let (env, contract_id, token_id, admin, sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     // Set up a course + enrollment + certificate + refund request so every
     // admin-only function has something valid to operate on.
@@ -2483,7 +2483,7 @@ fn test_old_admin_rejected_for_all_admin_only_functions_after_transfer() {
 #[test]
 fn test_admin_transferred_event_emitted_once_with_full_schema() {
     let (env, contract_id, _, admin, sec_admin, _, _) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let new_admin = Address::generate(&env);
     let new_sec = Address::generate(&env);
@@ -2524,7 +2524,7 @@ fn test_get_enrollment_returns_none_after_ttl_expiry() {
     // removing the persistent storage key (the runtime does not expire entries
     // in tests), which produces the same observable effect as a natural expiry.
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &1_000_000_000);
@@ -2569,7 +2569,7 @@ fn test_get_enrollment_returns_none_after_ttl_expiry() {
 #[test]
 fn test_enrollment_persists_after_long_ledger_advance() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &1_000_000_000);
@@ -2604,7 +2604,7 @@ fn test_enrollment_persists_after_long_ledger_advance() {
 #[test]
 fn test_enrollment_ttl_extended_on_write() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &1_000_000_000);
@@ -2644,7 +2644,7 @@ fn test_enrollment_ttl_extended_on_write() {
 #[test]
 fn test_batch_enroll_success() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &10_000_000_000);
@@ -2693,7 +2693,7 @@ fn test_batch_enroll_success() {
 #[should_panic(expected = "course is not available for enrollment")]
 fn test_batch_enroll_fails_on_invalid_course() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &10_000_000_000);
@@ -2734,7 +2734,7 @@ fn test_batch_enroll_fails_on_invalid_course() {
 #[should_panic(expected = "duplicate course in batch")]
 fn test_batch_enroll_rejects_duplicates() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &10_000_000_000);
@@ -2760,14 +2760,14 @@ fn test_batch_enroll_rejects_duplicates() {
 #[test]
 fn test_batch_enroll_large_unique_batch_succeeds() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &10_000_000_000);
 
     client.update_max_courses_limit(&admin, &100u32);
 
-    let batch_size = HamplardContract::MAX_BATCH_SIZE;
+    let batch_size = SorobanLardContract::MAX_BATCH_SIZE;
     let mut course_ids = soroban_sdk::Vec::new(&env);
     for i in 0..batch_size {
         let course_id = format!("COURSE-BATCH-LINEAR-{}", i);
@@ -2795,14 +2795,14 @@ fn test_batch_enroll_large_unique_batch_succeeds() {
 #[should_panic(expected = "duplicate course in batch")]
 fn test_batch_enroll_rejects_duplicate_in_large_batch() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &10_000_000_000);
 
     client.update_max_courses_limit(&admin, &100u32);
 
-    let unique_count = HamplardContract::MAX_BATCH_SIZE - 1;
+    let unique_count = SorobanLardContract::MAX_BATCH_SIZE - 1;
     let mut course_ids = soroban_sdk::Vec::new(&env);
     for i in 0..unique_count {
         let course_id = format!("COURSE-BATCH-DUP-LARGE-{}", i);
@@ -2826,7 +2826,7 @@ fn test_batch_enroll_rejects_duplicate_in_large_batch() {
 #[test]
 fn test_batch_enroll_emits_event_for_each_enrollment() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &10_000_000_000);
@@ -2911,7 +2911,7 @@ fn test_batch_enroll_emits_event_for_each_enrollment() {
 #[should_panic(expected = "unauthorized: mark_completed")]
 fn test_mark_completed_unauthorized_includes_operation() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -2937,7 +2937,7 @@ fn test_mark_completed_unauthorized_includes_operation() {
 #[should_panic(expected = "unauthorized: pause_platform")]
 fn test_pause_platform_unauthorized_includes_operation() {
     let (env, contract_id, _token_id, _admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     // Instructor tries to pause platform — should panic with operation name
     client.pause_platform(&instructor);
@@ -2947,7 +2947,7 @@ fn test_pause_platform_unauthorized_includes_operation() {
 #[should_panic(expected = "unauthorized: add_approved_token")]
 fn test_add_approved_token_unauthorized_includes_operation() {
     let (env, contract_id, token_id, _admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let new_token = Address::generate(&env);
 
@@ -2959,7 +2959,7 @@ fn test_add_approved_token_unauthorized_includes_operation() {
 #[should_panic(expected = "unauthorized: revoke_certificate")]
 fn test_revoke_certificate_unauthorized_includes_operation() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -3005,7 +3005,7 @@ fn test_revoke_certificate_unauthorized_includes_operation() {
 #[test]
 fn test_instructor_earnings_accumulate_and_withdraw() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
     let token_client = token::Client::new(&env, &token_id);
 
     let student = Address::generate(&env);
@@ -3040,7 +3040,7 @@ fn test_instructor_earnings_accumulate_and_withdraw() {
 #[test]
 fn test_multiple_enrollments_aggregate_earnings() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let price: i128 = 500_000_000;
     register_and_approve_course(
@@ -3072,7 +3072,7 @@ fn test_multiple_enrollments_aggregate_earnings() {
 #[should_panic(expected = "insufficient earnings balance")]
 fn test_unauthorized_instructor_withdraw_fails() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &1_000_000_000);
@@ -3095,7 +3095,7 @@ fn test_unauthorized_instructor_withdraw_fails() {
 #[test]
 fn test_double_withdrawal_prevented() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
     let token_client = token::Client::new(&env, &token_id);
 
     let student = Address::generate(&env);
@@ -3123,7 +3123,7 @@ fn test_double_withdrawal_prevented() {
 #[test]
 fn test_zero_balance_withdrawal_is_safe() {
     let (env, contract_id, token_id, _admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     assert_eq!(client.get_instructor_earnings(&instructor, &token_id), 0);
     client.withdraw_earnings(&instructor, &token_id, &0);
@@ -3134,7 +3134,7 @@ fn test_zero_balance_withdrawal_is_safe() {
 #[should_panic(expected = "instructor has reached the maximum number of course registrations")]
 fn test_registration_limit_enforced() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     // Default setup uses max=50, lower it to 2 for this test
     client.update_max_courses_limit(&admin, &2u32);
@@ -3177,7 +3177,7 @@ fn test_registration_limit_enforced() {
 #[test]
 fn test_admin_can_raise_limit() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     // Lower limit to 1
     client.update_max_courses_limit(&admin, &1u32);
@@ -3217,7 +3217,7 @@ fn test_admin_can_raise_limit() {
 #[test]
 fn test_different_instructors_have_independent_limits() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, _instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     // Lower limit to 1
     client.update_max_courses_limit(&admin, &1u32);
@@ -3255,7 +3255,7 @@ fn test_different_instructors_have_independent_limits() {
 #[test]
 fn test_get_max_courses_limit_returns_configured_value() {
     let (env, contract_id, _token_id, admin, _sec_admin, _treasury, _instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     // setup() passes 50 as the max
     assert_eq!(client.get_max_courses_limit(), 50u32);
@@ -3267,7 +3267,7 @@ fn test_get_max_courses_limit_returns_configured_value() {
 #[test]
 fn test_course_count_increments_correctly() {
     let (env, contract_id, token_id, _admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     assert_eq!(client.get_instructor_course_count(&instructor), 0u32);
 
@@ -3299,7 +3299,7 @@ fn test_course_count_increments_correctly() {
 #[test]
 fn test_verify_certificate_returns_true_for_valid_cert() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &1_000_000_000);
@@ -3341,7 +3341,7 @@ fn test_verify_certificate_returns_true_for_valid_cert() {
 #[test]
 fn test_verify_certificate_returns_false_for_revoked_cert() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &1_000_000_000);
@@ -3400,7 +3400,7 @@ fn test_verify_certificate_returns_false_for_revoked_cert() {
 #[test]
 fn test_verify_certificate_returns_false_for_nonexistent_cert() {
     let (env, contract_id, _token_id, _admin, _sec_admin, _treasury, _instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     // Certificate that was never issued must return false, not panic
     assert!(!client.verify_certificate(&String::from_str(&env, "CERT-DOES-NOT-EXIST")));
@@ -3409,7 +3409,7 @@ fn test_verify_certificate_returns_false_for_nonexistent_cert() {
 #[test]
 fn test_verify_certificate_false_does_not_mutate_state() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &1_000_000_000);
@@ -3466,7 +3466,7 @@ fn test_verify_certificate_false_does_not_mutate_state() {
 #[test]
 fn test_enroll_at_capacity_succeeds() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     // Register with max_capacity = 1
     client.register_course(
@@ -3500,7 +3500,7 @@ fn test_enroll_at_capacity_succeeds() {
 #[should_panic(expected = "course has reached maximum enrollment capacity")]
 fn test_enroll_beyond_capacity_rejected() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     // Register with max_capacity = 1
     client.register_course(
@@ -3531,7 +3531,7 @@ fn test_enroll_beyond_capacity_rejected() {
 #[test]
 fn test_enroll_unlimited_capacity() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     // Register with no capacity limit (None)
     client.register_course(
@@ -3567,7 +3567,7 @@ fn test_enroll_unlimited_capacity() {
 #[should_panic(expected = "course has reached maximum enrollment capacity")]
 fn test_batch_enroll_respects_capacity() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     // Course A: unlimited
     client.register_course(
@@ -3620,7 +3620,7 @@ fn test_batch_enroll_respects_capacity() {
 #[should_panic(expected = "batch size")]
 fn test_batch_enroll_rejects_oversized_batch() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &10_000_000_000);
@@ -3655,7 +3655,7 @@ fn test_batch_enroll_rejects_oversized_batch() {
 #[should_panic(expected = "total earned overflow")]
 fn test_enroll_total_earned_overflow() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -3686,7 +3686,7 @@ fn test_enroll_total_earned_overflow() {
 #[should_panic(expected = "has not elapsed")]
 fn test_course_approval_time_lock_premature_panics() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     // Set minimum review delay to 10 ledgers
     client.update_min_review_delay(&admin, &10u32);
@@ -3710,7 +3710,7 @@ fn test_course_approval_time_lock_premature_panics() {
 #[test]
 fn test_course_approval_time_lock_success() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     // Set minimum review delay to 10 ledgers
     client.update_min_review_delay(&admin, &10u32);
@@ -3742,7 +3742,7 @@ fn test_course_approval_time_lock_success() {
 #[should_panic]
 fn test_register_course_invalid_token() {
     let (env, contract_id, _, _, _, _, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
     let random_eoa = Address::generate(&env);
 
     client.register_course(
@@ -3763,7 +3763,7 @@ fn test_register_course_invalid_token() {
 #[test]
 fn test_get_enrollment_authorized_access() {
     let (env, contract_id, token_id, admin, sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &1_000_000_000);
 
@@ -3800,7 +3800,7 @@ fn test_get_enrollment_authorized_access() {
 #[should_panic(expected = "unauthorized")]
 fn test_get_enrollment_unauthorized_access() {
     let (env, contract_id, token_id, admin, sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
     let student = Address::generate(&env);
     let random_user = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &1_000_000_000);
@@ -3829,7 +3829,7 @@ fn test_get_enrollment_unauthorized_access() {
 #[should_panic(expected = "course ID is within archival cooldown period")]
 fn test_archive_then_reregister_fails() {
     let (env, contract_id, token_id, admin, sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     register_and_approve_course(
         &env,
@@ -3869,7 +3869,7 @@ fn test_archive_then_reregister_fails() {
 #[should_panic(expected = "already marked as completed")]
 fn test_concurrent_completion() {
     let (env, contract_id, token_id, admin, sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &1_000_000_000);
 
@@ -3908,7 +3908,7 @@ fn test_concurrent_completion() {
 #[should_panic(expected = "price is outside the expected USDC precision range")]
 fn test_register_course_price_too_low_rejected() {
     let (env, contract_id, token_id, _admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     // 50 stroops — clearly a whole-dollar-unit mistake, not real stroops
     client.register_course(
@@ -3927,7 +3927,7 @@ fn test_register_course_price_too_low_rejected() {
 #[should_panic(expected = "price is outside the expected USDC precision range")]
 fn test_register_course_price_too_high_rejected() {
     let (env, contract_id, token_id, _admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     // Absurdly large — an extra few zeros beyond any sane course price
     client.register_course(
@@ -3945,7 +3945,7 @@ fn test_register_course_price_too_high_rejected() {
 #[test]
 fn test_register_course_price_zero_still_allowed() {
     let (env, contract_id, token_id, _admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let course_id = String::from_str(&env, "COURSE-PRICE-FREE");
     client.register_course(
@@ -3966,7 +3966,7 @@ fn test_register_course_price_zero_still_allowed() {
 #[test]
 fn test_register_course_price_at_range_boundaries_succeeds() {
     let (env, contract_id, token_id, _admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let min_course_id = String::from_str(&env, "COURSE-PRICE-MIN");
     client.register_course(
@@ -4005,7 +4005,7 @@ fn test_register_course_price_at_range_boundaries_succeeds() {
 #[test]
 fn test_course_created_at_ledger_is_accurate() {
     let (env, contract_id, token_id, admin, sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     // Advance ledger
     env.ledger().with_mut(|l| {
@@ -4031,7 +4031,7 @@ fn test_course_created_at_ledger_is_accurate() {
 #[test]
 fn test_course_last_updated_ledger_tracks_modifications() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     env.ledger().with_mut(|l| {
         l.sequence_number = 12000;
@@ -4069,7 +4069,7 @@ fn test_course_last_updated_ledger_tracks_modifications() {
 #[test]
 fn test_course_certificate_id_collision_verification() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &1_000_000_000);
 
@@ -4127,7 +4127,7 @@ fn test_course_certificate_id_collision_verification() {
 #[should_panic(expected = "proposed admin addresses are identical to current admin addresses")]
 fn test_transfer_admin_rejects_identical_addresses() {
     let (env, contract_id, _token_id, admin, sec_admin, _treasury, _instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     // Proposing the exact current admin & secondary admin should panic
     client.transfer_admin(&admin, &sec_admin, &admin, &sec_admin);
@@ -4137,7 +4137,7 @@ fn test_transfer_admin_rejects_identical_addresses() {
 #[should_panic(expected = "admin and secondary_admin must be distinct addresses")]
 fn test_transfer_admin_rejects_same_new_admin_and_secondary() {
     let (env, contract_id, _token_id, admin, sec_admin, _treasury, _instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let new_admin = Address::generate(&env);
     // Setting both admin and secondary admin to the same address should panic
@@ -4147,7 +4147,7 @@ fn test_transfer_admin_rejects_same_new_admin_and_secondary() {
 #[test]
 fn test_certificate_expiry_behavior() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &1_000_000_000);
 
@@ -4197,7 +4197,7 @@ fn test_certificate_expiry_behavior() {
 #[test]
 fn test_freeze_instructor_lifecycle() {
     let (env, contract_id, _token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     // Assert initially not frozen
     assert!(!client.is_instructor_frozen(&instructor));
@@ -4214,7 +4214,7 @@ fn test_freeze_instructor_lifecycle() {
 #[test]
 fn test_student_blocklist_lifecycle() {
     let (env, contract_id, _token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
     let student = Address::generate(&env);
 
     assert!(!client.is_student_blocked(&student));
@@ -4230,7 +4230,7 @@ fn test_student_blocklist_lifecycle() {
 #[should_panic(expected = "student is blocked")]
 fn test_blocked_student_cannot_enroll() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
     let student = Address::generate(&env);
 
     register_and_approve_course(
@@ -4251,7 +4251,7 @@ fn test_blocked_student_cannot_enroll() {
 #[should_panic(expected = "instructor is frozen")]
 fn test_frozen_instructor_cannot_register_course() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     client.freeze_instructor(&admin, &instructor);
 
@@ -4270,7 +4270,7 @@ fn test_frozen_instructor_cannot_register_course() {
 #[test]
 fn test_refund_lifecycle() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -4318,7 +4318,7 @@ fn test_refund_lifecycle() {
 #[should_panic(expected = "refund window has expired")]
 fn test_refund_request_outside_window_fails() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -4349,7 +4349,7 @@ fn test_refund_request_outside_window_fails() {
 #[test]
 fn test_refund_rejection() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -4380,7 +4380,7 @@ fn test_refund_rejection() {
 #[should_panic(expected = "instructor is frozen")]
 fn test_frozen_instructor_enrollment_blocked() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &1_000_000_000);
 
@@ -4409,7 +4409,7 @@ fn test_frozen_instructor_enrollment_blocked() {
 #[test]
 fn test_has_completed_distinguishes_absent_enrollment_from_incomplete() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -4442,7 +4442,7 @@ fn test_has_completed_distinguishes_absent_enrollment_from_incomplete() {
 #[test]
 fn test_re_enroll_after_completion_succeeds() {
     let (env, contract_id, token_id, admin, _sec_admin, treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &10_000_000_000);
@@ -4495,7 +4495,7 @@ fn test_re_enroll_after_completion_succeeds() {
 #[test]
 fn test_re_enroll_archives_original_completion_and_certificate() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &10_000_000_000);
@@ -4586,7 +4586,7 @@ fn last_event_val(env: &Env, contract_id: &Address, name: &str) -> Val {
 #[test]
 fn test_events_emitted_for_admin_operations() {
     let (env, contract_id, token_id, admin, sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -4765,7 +4765,7 @@ fn test_events_emitted_for_admin_operations() {
 #[should_panic(expected = "no prior enrollment found for this course")]
 fn test_re_enroll_without_prior_enrollment_fails() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     register_and_approve_course(
@@ -4787,7 +4787,7 @@ fn test_re_enroll_without_prior_enrollment_fails() {
 #[should_panic(expected = "current enrollment has not been completed yet")]
 fn test_re_enroll_before_completion_fails() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &10_000_000_000);
@@ -4811,7 +4811,7 @@ fn test_re_enroll_before_completion_fails() {
 #[test]
 fn test_re_enroll_multiple_times_accumulates_history() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &10_000_000_000);
@@ -4869,7 +4869,7 @@ fn test_re_enroll_multiple_times_accumulates_history() {
 #[should_panic(expected = "unauthorized")]
 fn test_get_enrollment_history_unauthorized_access() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     let random_user = Address::generate(&env);
@@ -4902,7 +4902,7 @@ fn test_get_enrollment_history_unauthorized_access() {
 #[test]
 fn test_multi_sig_admin_events_record_both_actors() {
     let (env, contract_id, token_id, admin, sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     // transfer_admin (admin_proposed) — multi-sig proposal
     let new_admin = Address::generate(&env);
@@ -4968,7 +4968,7 @@ fn test_multi_sig_admin_events_record_both_actors() {
 #[test]
 fn test_process_refund_event_includes_admin() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -5006,7 +5006,7 @@ fn test_process_refund_event_includes_admin() {
 #[test]
 fn test_approve_course_event_details() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     client.register_course(
         &instructor,
@@ -5044,7 +5044,7 @@ fn test_approve_course_event_details() {
 #[test]
 fn test_get_certificate_authorized_roles() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -5097,7 +5097,7 @@ fn test_get_certificate_authorized_roles() {
 #[should_panic(expected = "unauthorized")]
 fn test_get_certificate_unauthorized_third_party_fails() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -5154,7 +5154,7 @@ fn test_get_certificate_unauthorized_third_party_fails() {
 #[should_panic]
 fn test_certificate_student_b_without_enrollment_panics() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student_a = Address::generate(&env);
     let student_b = Address::generate(&env);
@@ -5199,7 +5199,7 @@ fn test_certificate_student_b_without_enrollment_panics() {
 #[test]
 fn test_certificate_student_matches_enrollment() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student_a = Address::generate(&env);
     let student_b = Address::generate(&env);
@@ -5252,7 +5252,7 @@ fn test_certificate_student_matches_enrollment() {
 #[test]
 fn test_get_courses_by_instructor_accurate_after_registration_pause_and_archival() {
     let (env, contract_id, token_id, admin, sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     // A second instructor's courses must not leak into the first instructor's list.
     let other_instructor = Address::generate(&env);
@@ -5328,7 +5328,7 @@ fn test_get_courses_by_instructor_accurate_after_registration_pause_and_archival
 #[test]
 fn test_get_courses_by_instructor_empty_for_unknown_instructor() {
     let (env, contract_id, _token_id, _admin, _sec_admin, _treasury, _instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let unknown = Address::generate(&env);
     let list = client.get_courses_by_instructor(&unknown);
@@ -5343,7 +5343,7 @@ fn test_get_courses_by_instructor_empty_for_unknown_instructor() {
 #[should_panic(expected = "minimum enrollment duration has not elapsed")]
 fn test_mark_completed_before_min_duration_fails() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     client.update_min_completion_ledgers(&admin, &50u32);
 
@@ -5376,7 +5376,7 @@ fn test_mark_completed_before_min_duration_fails() {
 #[test]
 fn test_mark_completed_after_min_duration_succeeds() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     client.update_min_completion_ledgers(&admin, &50u32);
 
@@ -5415,7 +5415,7 @@ fn test_mark_completed_default_zero_delay_allows_immediate_completion() {
     // No update_min_completion_ledgers() call — default is 0, matching
     // today's behavior for courses registered before this feature existed.
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &10_000_000_000);
@@ -5450,7 +5450,7 @@ fn test_mark_completed_default_zero_delay_allows_immediate_completion() {
 #[should_panic(expected = "course is not available for enrollment")]
 fn test_enroll_rejected_for_just_paused_course() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &10_000_000_000);
@@ -5482,7 +5482,7 @@ fn test_enroll_rejected_for_just_paused_course() {
 #[should_panic(expected = "certificate_id cannot be empty")]
 fn test_issue_certificate_empty_id_rejected() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -5525,7 +5525,7 @@ fn test_issue_certificate_empty_id_rejected() {
 #[should_panic(expected = "certificate is already revoked")]
 fn test_revoke_certificate_double_revocation_rejected() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -5577,7 +5577,7 @@ fn test_revoke_certificate_double_revocation_rejected() {
 #[test]
 fn test_revoke_certificate_metadata_unchanged_after_rejected_double_revoke() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -5641,7 +5641,7 @@ fn test_revoke_certificate_metadata_unchanged_after_rejected_double_revoke() {
 #[should_panic(expected = "certificate ID already exists")]
 fn test_revoke_certificate_id_cannot_be_reused_to_unrevoke() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student_a = Address::generate(&env);
     let student_b = Address::generate(&env);
@@ -5719,7 +5719,7 @@ fn test_revoke_certificate_id_cannot_be_reused_to_unrevoke() {
 #[should_panic(expected = "proposed admin addresses are identical to current admin addresses")]
 fn test_transfer_admin_same_address_rejected() {
     let (env, contract_id, _token_id, admin, sec_admin, _treasury, _instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     // Attempt to transfer admin to the exact same pair — must panic
     client.transfer_admin(&admin, &sec_admin, &admin, &sec_admin);
@@ -5731,7 +5731,7 @@ fn test_transfer_admin_same_address_rejected() {
 #[should_panic(expected = "enrollment has expired")]
 fn test_mark_completed_panics_when_enrollment_expired() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -5771,7 +5771,7 @@ fn test_mark_completed_panics_when_enrollment_expired() {
 #[test]
 fn test_has_completed_returns_false_when_enrollment_expired() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -5809,7 +5809,7 @@ fn test_has_completed_returns_false_when_enrollment_expired() {
 #[test]
 fn test_has_completed_returns_true_when_completed_before_expiry() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -5849,7 +5849,7 @@ fn test_has_completed_returns_true_when_completed_before_expiry() {
 #[test]
 fn test_enrollment_expiry_none_allows_completion_at_any_time() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -5892,7 +5892,7 @@ fn test_enrollment_expiry_none_allows_completion_at_any_time() {
 #[test]
 fn test_certificate_issued_by_matches_contract_address() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &1_000_000_000);
@@ -5938,7 +5938,7 @@ fn test_certificate_issued_by_matches_contract_address() {
 fn test_certificate_issued_by_is_not_admin_or_instructor() {
     // Verifies that issued_by is the *contract* address, not the admin or instructor.
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &1_000_000_000);
@@ -5995,7 +5995,7 @@ fn test_certificate_issued_by_is_not_admin_or_instructor() {
 fn test_certificate_issued_by_persists_after_revocation() {
     // Revoking a certificate must not clear the issued_by field.
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &1_000_000_000);
@@ -6043,7 +6043,7 @@ fn test_multiple_certificates_share_same_issued_by() {
     // All certificates issued by the same contract deployment should have
     // an identical issued_by regardless of which course or student.
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student_a = Address::generate(&env);
     let student_b = Address::generate(&env);
@@ -6129,7 +6129,7 @@ fn test_init_sets_refund_window() {
     let env = Env::default();
     env.mock_all_auths();
 
-    let contract_id = env.register(HamplardContract, ());
+    let contract_id = env.register(SorobanLardContract, ());
     let token_admin = Address::generate(&env);
     let token_id = env
         .register_stellar_asset_contract_v2(token_admin)
@@ -6139,7 +6139,7 @@ fn test_init_sets_refund_window() {
     let sec_admin = Address::generate(&env);
     let treasury = Address::generate(&env);
 
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
     // Use a non-default window so we can distinguish from the fallback 1000
     client.init(
         &admin, &sec_admin, &treasury, &20u32, &50u32, &500u32, &17_280u32,
@@ -6151,7 +6151,7 @@ fn test_init_sets_refund_window() {
 #[test]
 fn test_refund_request_within_window_succeeds() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &1_000_000_000);
@@ -6187,7 +6187,7 @@ fn test_refund_request_at_window_boundary_succeeds() {
     // A request submitted exactly at enrolled_at + window must still succeed
     // (window is inclusive: elapsed == window is allowed, elapsed > window is rejected).
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &1_000_000_000);
@@ -6225,7 +6225,7 @@ fn test_refund_request_at_window_boundary_succeeds() {
 fn test_refund_request_one_ledger_past_window_rejected() {
     // A request at elapsed == window + 1 must be rejected.
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &1_000_000_000);
@@ -6258,7 +6258,7 @@ fn test_refund_request_one_ledger_past_window_rejected() {
 #[should_panic(expected = "refund window has expired")]
 fn test_refund_request_far_past_window_rejected() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &1_000_000_000);
@@ -6292,7 +6292,7 @@ fn test_admin_can_extend_refund_window_after_init() {
     // Confirms that update_refund_window() still works post-init and
     // immediately affects subsequent request_refund() calls.
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &1_000_000_000);
@@ -6334,7 +6334,7 @@ fn test_admin_can_extend_refund_window_after_init() {
 fn test_refund_window_zero_rejects_all_requests() {
     // When the window is 0, any elapsed ledger (≥ 1) is beyond the window.
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &1_000_000_000);
@@ -6377,7 +6377,7 @@ fn test_get_course_extends_ttl_on_read() {
     // We advance the ledger to near the threshold so that a read *must* extend
     // the TTL to keep the entry alive, then confirm the entry is still readable.
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     register_and_approve_course(
         &env,
@@ -6411,7 +6411,7 @@ fn test_get_course_extends_ttl_on_each_successive_read() {
     // Multiple sequential reads must each independently succeed and keep the
     // entry alive by re-extending on every call.
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     register_and_approve_course(
         &env,
@@ -6442,7 +6442,7 @@ fn test_get_course_returns_none_without_error_for_missing_course() {
     // get_course() must return None (not panic) when the course does not exist.
     // The TTL-extension branch must not fire for an absent key.
     let (env, contract_id, _token_id, _admin, _sec_admin, _treasury, _instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let result = client.get_course(&String::from_str(&env, "COURSE-DOES-NOT-EXIST"));
     assert!(result.is_none());
@@ -6453,7 +6453,7 @@ fn test_get_course_ttl_extension_does_not_mutate_course_data() {
     // TTL extension is a storage-layer side-effect only; course data must be
     // bit-for-bit identical before and after the ledger advance + re-read.
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     register_and_approve_course(
         &env,
@@ -6493,7 +6493,7 @@ fn test_get_course_ttl_extension_does_not_mutate_course_data() {
 fn test_register_course_stores_content_hash() {
     // Verify that the hash passed at registration is stored verbatim.
     let (env, contract_id, token_id, _admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let hash = BytesN::from_array(&env, &[0xABu8; 32]);
     let course_id = String::from_str(&env, "COURSE-HASH-STORE");
@@ -6517,7 +6517,7 @@ fn test_register_course_stores_content_hash() {
 fn test_register_course_distinct_hashes_stored_independently() {
     // Two courses with different hashes must each store their own value.
     let (env, contract_id, token_id, _admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let hash_a = BytesN::from_array(&env, &[0x11u8; 32]);
     let hash_b = BytesN::from_array(&env, &[0x22u8; 32]);
@@ -6558,7 +6558,7 @@ fn test_register_course_distinct_hashes_stored_independently() {
 #[test]
 fn test_instructor_can_update_content_hash_on_active_course() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let original_hash = BytesN::from_array(&env, &[0x01u8; 32]);
     let new_hash = BytesN::from_array(&env, &[0x02u8; 32]);
@@ -6587,7 +6587,7 @@ fn test_instructor_can_update_content_hash_on_active_course() {
 #[test]
 fn test_admin_can_update_content_hash() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let original_hash = BytesN::from_array(&env, &[0x03u8; 32]);
     let new_hash = BytesN::from_array(&env, &[0x04u8; 32]);
@@ -6615,7 +6615,7 @@ fn test_admin_can_update_content_hash() {
 #[test]
 fn test_instructor_can_update_content_hash_on_paused_course() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let new_hash = BytesN::from_array(&env, &[0x05u8; 32]);
     let course_id = String::from_str(&env, "COURSE-HASH-UPDATE-PAUSED");
@@ -6642,7 +6642,7 @@ fn test_instructor_can_update_content_hash_on_paused_course() {
 #[should_panic(expected = "cannot update content hash of an archived course")]
 fn test_update_content_hash_archived_course_rejected() {
     let (env, contract_id, token_id, admin, sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let new_hash = BytesN::from_array(&env, &[0x06u8; 32]);
     let course_id = String::from_str(&env, "COURSE-HASH-ARCHIVED");
@@ -6667,7 +6667,7 @@ fn test_update_content_hash_archived_course_rejected() {
 #[should_panic(expected = "unauthorized")]
 fn test_update_content_hash_random_caller_rejected() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let attacker = Address::generate(&env);
     let new_hash = BytesN::from_array(&env, &[0x07u8; 32]);
@@ -6690,7 +6690,7 @@ fn test_update_content_hash_random_caller_rejected() {
 #[test]
 fn test_update_content_hash_emits_event() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let new_hash = BytesN::from_array(&env, &[0x08u8; 32]);
     let course_id = String::from_str(&env, "COURSE-HASH-EVENT");
@@ -6726,7 +6726,7 @@ fn test_update_content_hash_emits_event() {
 fn test_update_content_hash_updates_last_updated_ledger() {
     // Updating the hash must also bump last_updated_ledger to the current sequence.
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let new_hash = BytesN::from_array(&env, &[0x09u8; 32]);
     let course_id = String::from_str(&env, "COURSE-HASH-LEDGER");
@@ -6757,7 +6757,7 @@ fn test_update_content_hash_updates_last_updated_ledger() {
 fn test_content_hash_survives_enroll_and_completion() {
     // Enrollment and mark_completed writes must not overwrite the content_hash.
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let hash = BytesN::from_array(&env, &[0xDDu8; 32]);
     let course_id = String::from_str(&env, "COURSE-HASH-PERSIST");
@@ -6801,7 +6801,7 @@ fn test_content_hash_survives_enroll_and_completion() {
 #[test]
 fn test_admin_operations_succeed_before_expiry() {
     let (env, contract_id, token_id, admin, sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     // Set admin expiry 1000 ledgers in the future
     let current_ledger = env.ledger().sequence();
@@ -6816,7 +6816,7 @@ fn test_admin_operations_succeed_before_expiry() {
 #[should_panic(expected = "admin role has expired")]
 fn test_admin_operations_blocked_after_expiry() {
     let (env, contract_id, token_id, admin, sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     // Set admin expiry 10 ledgers in the future
     let current_ledger = env.ledger().sequence();
@@ -6834,7 +6834,7 @@ fn test_admin_operations_blocked_after_expiry() {
 #[test]
 fn test_remove_admin_expiry() {
     let (env, contract_id, token_id, admin, sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     // Set admin expiry
     let current_ledger = env.ledger().sequence();
@@ -6860,7 +6860,7 @@ fn test_remove_admin_expiry() {
 #[test]
 fn test_platform_pause_lifecycle_end_to_end() {
     let (env, contract_id, token_id, admin, sec_admin, treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     // Register and approve a course
     register_and_approve_course(
@@ -6925,7 +6925,7 @@ fn test_platform_pause_lifecycle_end_to_end() {
 #[should_panic(expected = "platform is paused")]
 fn test_enroll_blocked_during_platform_pause() {
     let (env, contract_id, token_id, admin, sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     register_and_approve_course(
         &env,
@@ -6948,7 +6948,7 @@ fn test_enroll_blocked_during_platform_pause() {
 #[should_panic(expected = "platform is paused")]
 fn test_batch_enroll_blocked_during_platform_pause() {
     let (env, contract_id, token_id, admin, sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     register_and_approve_course(
         &env,
@@ -6976,7 +6976,7 @@ fn test_batch_enroll_blocked_during_platform_pause() {
 #[test]
 fn test_enrollment_succeeds_below_platform_cap() {
     let (env, contract_id, token_id, admin, sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     // Set platform cap to 2 enrollments
     client.set_platform_enrollment_cap(&admin, &Some(2));
@@ -7009,7 +7009,7 @@ fn test_enrollment_succeeds_below_platform_cap() {
 #[should_panic(expected = "platform has reached maximum total enrollment capacity")]
 fn test_enrollment_blocked_at_platform_cap() {
     let (env, contract_id, token_id, admin, sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     // Set platform cap to 1 enrollment
     client.set_platform_enrollment_cap(&admin, &Some(1));
@@ -7040,7 +7040,7 @@ fn test_enrollment_blocked_at_platform_cap() {
 #[test]
 fn test_platform_counter_decrements_on_completion() {
     let (env, contract_id, token_id, admin, sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     client.set_platform_enrollment_cap(&admin, &Some(2));
 
@@ -7084,7 +7084,7 @@ fn test_platform_counter_decrements_on_completion() {
 #[test]
 fn test_platform_counter_decrements_on_refund() {
     let (env, contract_id, token_id, admin, sec_admin, treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     client.set_platform_enrollment_cap(&admin, &Some(2));
 
@@ -7135,7 +7135,7 @@ fn test_platform_counter_decrements_on_refund() {
 #[should_panic(expected = "cannot mark completion for archived course")]
 fn test_mark_completed_on_archived_course_rejected() {
     let (env, contract_id, token_id, admin, sec_admin, treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     register_and_approve_course(
         &env,
@@ -7182,7 +7182,7 @@ fn test_mark_completed_on_archived_course_rejected() {
 #[should_panic(expected = "cannot mark completion for archived course")]
 fn test_mark_completed_rejects_archived_course_even_with_active_enrollment() {
     let (env, contract_id, token_id, admin, sec_admin, treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     register_and_approve_course(
         &env,
@@ -7224,7 +7224,7 @@ fn test_mark_completed_rejects_archived_course_even_with_active_enrollment() {
 #[test]
 fn test_mark_completed_succeeds_on_paused_course() {
     let (env, contract_id, token_id, admin, sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     register_and_approve_course(
         &env,
@@ -7266,7 +7266,7 @@ fn test_mark_completed_succeeds_on_paused_course() {
 #[test]
 fn test_set_prerequisite_courses_success() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     register_and_approve_course(
         &env,
@@ -7304,7 +7304,7 @@ fn test_set_prerequisite_courses_success() {
 #[should_panic(expected = "unauthorized")]
 fn test_set_prerequisite_courses_unauthorized() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     register_and_approve_course(
         &env,
@@ -7340,7 +7340,7 @@ fn test_set_prerequisite_courses_unauthorized() {
 #[should_panic(expected = "course cannot be its own prerequisite")]
 fn test_set_prerequisite_courses_self_reference_rejected() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     register_and_approve_course(
         &env,
@@ -7363,7 +7363,7 @@ fn test_set_prerequisite_courses_self_reference_rejected() {
 #[should_panic(expected = "prerequisite course not found")]
 fn test_set_prerequisite_courses_nonexistent_rejected() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     register_and_approve_course(
         &env,
@@ -7389,7 +7389,7 @@ fn test_set_prerequisite_courses_nonexistent_rejected() {
 #[should_panic(expected = "prerequisite course not completed")]
 fn test_enroll_blocked_without_completed_prerequisite() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -7428,7 +7428,7 @@ fn test_enroll_blocked_without_completed_prerequisite() {
 #[should_panic(expected = "prerequisite course not completed")]
 fn test_enroll_blocked_when_prerequisite_completed_but_not_certified() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -7474,7 +7474,7 @@ fn test_enroll_blocked_when_prerequisite_completed_but_not_certified() {
 #[test]
 fn test_enroll_succeeds_with_completed_and_certified_prerequisite() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -7531,7 +7531,7 @@ fn test_enroll_succeeds_with_completed_and_certified_prerequisite() {
 #[should_panic(expected = "prerequisite course not completed")]
 fn test_enroll_blocked_when_prerequisite_certificate_revoked() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -7594,7 +7594,7 @@ fn test_enroll_blocked_when_prerequisite_certificate_revoked() {
 #[should_panic(expected = "certificate already issued for this enrollment")]
 fn test_issue_certificate_after_revoke_is_rejected() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -7666,7 +7666,7 @@ fn test_issue_certificate_after_revoke_is_rejected() {
 #[test]
 fn test_reissue_certificate_allowed_after_re_enroll() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -7746,7 +7746,7 @@ fn test_reissue_certificate_allowed_after_re_enroll() {
 #[test]
 fn test_propose_upgrade_authorized() {
     let (env, contract_id, _token_id, admin, sec_admin, _treasury, _instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let wasm_hash = BytesN::from_array(&env, &[7u8; 32]);
     client.propose_upgrade(&admin, &sec_admin, &wasm_hash);
@@ -7763,7 +7763,7 @@ fn test_propose_upgrade_authorized() {
 #[should_panic(expected = "unauthorized: requires both admin signatures")]
 fn test_propose_upgrade_unauthorized() {
     let (env, contract_id, _token_id, admin, _sec_admin, _treasury, _instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let random = Address::generate(&env);
     let wasm_hash = BytesN::from_array(&env, &[7u8; 32]);
@@ -7776,7 +7776,7 @@ fn test_propose_upgrade_unauthorized() {
 #[should_panic(expected = "upgrade time-lock has not elapsed")]
 fn test_upgrade_contract_before_timelock_fails() {
     let (env, contract_id, _token_id, admin, sec_admin, _treasury, _instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let wasm_hash = BytesN::from_array(&env, &[7u8; 32]);
     client.propose_upgrade(&admin, &sec_admin, &wasm_hash);
@@ -7789,7 +7789,7 @@ fn test_upgrade_contract_before_timelock_fails() {
 #[should_panic(expected = "unauthorized: requires both admin signatures")]
 fn test_upgrade_contract_unauthorized_fails() {
     let (env, contract_id, _token_id, admin, sec_admin, _treasury, _instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let random = Address::generate(&env);
     let wasm_hash = BytesN::from_array(&env, &[7u8; 32]);
@@ -7802,7 +7802,7 @@ fn test_upgrade_contract_unauthorized_fails() {
 #[should_panic(expected = "no pending upgrade")]
 fn test_upgrade_contract_without_proposal_fails() {
     let (env, contract_id, _token_id, admin, sec_admin, _treasury, _instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     client.upgrade_contract(&admin, &sec_admin);
 }
@@ -7819,7 +7819,7 @@ fn test_upgrade_contract_executes_after_timelock_elapses() {
     // to upload — but that failure originates from the host, not from our
     // authorization or time-lock logic.
     let (env, contract_id, _token_id, admin, sec_admin, _treasury, _instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let wasm_hash = BytesN::from_array(&env, &[7u8; 32]);
     client.propose_upgrade(&admin, &sec_admin, &wasm_hash);
@@ -7835,7 +7835,7 @@ fn test_upgrade_contract_executes_after_timelock_elapses() {
 #[test]
 fn test_cancel_upgrade_authorized() {
     let (env, contract_id, _token_id, admin, sec_admin, _treasury, _instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let wasm_hash = BytesN::from_array(&env, &[7u8; 32]);
     client.propose_upgrade(&admin, &sec_admin, &wasm_hash);
@@ -7849,7 +7849,7 @@ fn test_cancel_upgrade_authorized() {
 #[should_panic(expected = "unauthorized: requires both admin signatures")]
 fn test_cancel_upgrade_unauthorized_fails() {
     let (env, contract_id, _token_id, admin, sec_admin, _treasury, _instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let random = Address::generate(&env);
     let wasm_hash = BytesN::from_array(&env, &[7u8; 32]);
@@ -7861,7 +7861,7 @@ fn test_cancel_upgrade_unauthorized_fails() {
 #[test]
 fn test_set_upgrade_timelock_authorized() {
     let (env, contract_id, _token_id, admin, sec_admin, _treasury, _instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     client.set_upgrade_timelock(&admin, &sec_admin, &500u32);
     assert_eq!(client.get_upgrade_timelock(), 500u32);
@@ -7871,7 +7871,7 @@ fn test_set_upgrade_timelock_authorized() {
 #[should_panic(expected = "unauthorized: requires both admin signatures")]
 fn test_set_upgrade_timelock_unauthorized_fails() {
     let (env, contract_id, _token_id, admin, _sec_admin, _treasury, _instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let random = Address::generate(&env);
     client.set_upgrade_timelock(&admin, &random, &500u32);
@@ -7884,7 +7884,7 @@ fn test_set_upgrade_timelock_unauthorized_fails() {
 #[test]
 fn test_issue_141_certificate_course_id_matches_enrollment() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -7929,7 +7929,7 @@ fn test_issue_141_certificate_course_id_matches_enrollment() {
 #[should_panic(expected = "enrollment not found")]
 fn test_issue_141_certificate_requires_enrollment_in_course() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     register_and_approve_course(
         &env,
@@ -7959,7 +7959,7 @@ fn test_issue_141_certificate_requires_enrollment_in_course() {
 #[test]
 fn test_issue_141_enrollment_ref_is_unique_per_enrollment() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -8013,7 +8013,7 @@ fn test_issue_141_enrollment_ref_is_unique_per_enrollment() {
 #[test]
 fn test_issue_146_revocation_starts_pending() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -8063,7 +8063,7 @@ fn test_issue_146_revocation_starts_pending() {
 #[test]
 fn test_issue_146_student_can_challenge_pending_revocation() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -8111,7 +8111,7 @@ fn test_issue_146_student_can_challenge_pending_revocation() {
 #[should_panic(expected = "only the certificate holder may challenge a revocation")]
 fn test_issue_146_unauthorized_challenge_fails() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     let attacker = Address::generate(&env);
@@ -8153,7 +8153,7 @@ fn test_issue_146_unauthorized_challenge_fails() {
 #[should_panic(expected = "certificate has no pending revocation to challenge")]
 fn test_issue_146_challenge_without_revocation_fails() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -8192,7 +8192,7 @@ fn test_issue_146_challenge_without_revocation_fails() {
 #[should_panic(expected = "revocation challenge period has expired")]
 fn test_issue_146_late_challenge_fails() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -8239,7 +8239,7 @@ fn test_issue_146_late_challenge_fails() {
 #[test]
 fn test_issue_146_revocation_becomes_permanent_after_deadline() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -8290,7 +8290,7 @@ fn test_issue_146_revocation_becomes_permanent_after_deadline() {
 #[should_panic(expected = "certificate is already revoked")]
 fn test_issue_146_double_revocation_rejected() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -8330,7 +8330,7 @@ fn test_issue_146_double_revocation_rejected() {
 #[test]
 fn test_issue_146_challenge_boundary_condition() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -8379,7 +8379,7 @@ fn test_issue_146_challenge_boundary_condition() {
 #[test]
 fn test_issue_146_rerevocation_after_successful_challenge() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -8432,7 +8432,7 @@ fn test_issue_146_rerevocation_after_successful_challenge() {
 #[test]
 fn test_issue_146_configurable_challenge_period() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     // Set a short challenge period (5 ledgers)
     client.set_revocation_challenge_period(&admin, &5u32);
@@ -8481,7 +8481,7 @@ fn test_issue_146_configurable_challenge_period() {
 #[test]
 fn test_enrollment_rejected_event_emitted_for_paused_course() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -8535,7 +8535,7 @@ fn test_enrollment_rejected_event_emitted_for_paused_course() {
 #[test]
 fn test_enrollment_rejected_event_emitted_for_pending_course() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -8586,7 +8586,7 @@ fn test_enrollment_rejected_event_emitted_for_pending_course() {
 #[test]
 fn test_enrollment_rejected_event_emitted_for_archived_course() {
     let (env, contract_id, token_id, admin, sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -8644,7 +8644,7 @@ fn test_enrollment_rejected_event_emitted_for_archived_course() {
 #[should_panic(expected = "course_id contains invalid characters")]
 fn test_register_course_rejects_null_byte_in_id() {
     let (env, contract_id, token_id, _admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     // Course ID with embedded null byte
     let course_id_with_null = String::from_bytes(
@@ -8667,7 +8667,7 @@ fn test_register_course_rejects_null_byte_in_id() {
 #[should_panic(expected = "course_id contains invalid characters")]
 fn test_register_course_rejects_control_characters_in_id() {
     let (env, contract_id, token_id, _admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     // Course ID with various control characters (newline, tab, etc.)
     let course_id_with_control = String::from_bytes(
@@ -8690,7 +8690,7 @@ fn test_register_course_rejects_control_characters_in_id() {
 #[should_panic(expected = "course_id contains invalid characters")]
 fn test_register_course_rejects_delete_character_in_id() {
     let (env, contract_id, token_id, _admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     // Course ID with delete character (0x7F)
     let course_id_with_delete =
@@ -8710,7 +8710,7 @@ fn test_register_course_rejects_delete_character_in_id() {
 #[test]
 fn test_register_course_accepts_printable_ascii() {
     let (env, contract_id, token_id, _admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     // Course ID with various printable ASCII characters (excluding backtick and tilde as per validation)
     let course_id = String::from_str(&env, "COURSE-ABC-123!@#$%^&*()_+-=[]{}|;':\",./<>?");
@@ -8733,7 +8733,7 @@ fn test_register_course_accepts_printable_ascii() {
 fn test_register_course_accepts_unicode_above_0x7E() {
     // Course IDs with characters above printable ASCII range (> 0x7E) are also rejected
     let (env, contract_id, token_id, _admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     // Course ID with extended ASCII character (tilde 0x7E is the boundary)
     // Characters like 0x7F (DEL) and above should be rejected
@@ -8761,7 +8761,7 @@ fn test_register_course_accepts_unicode_above_0x7E() {
 #[should_panic(expected = "already marked as completed")]
 fn test_mark_completed_twice_rejected() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -8804,7 +8804,7 @@ fn test_mark_completed_twice_idempotency_check() {
     // Verify that calling mark_completed twice with the same evidence
     // results in the second call being rejected
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -8849,7 +8849,7 @@ fn test_approve_course_immediately_after_init_rejected() {
     let env = Env::default();
     env.mock_all_auths();
 
-    let contract_id = env.register(HamplardContract, ());
+    let contract_id = env.register(SorobanLardContract, ());
     let token_admin = Address::generate(&env);
     let token_id = env
         .register_stellar_asset_contract_v2(token_admin)
@@ -8860,7 +8860,7 @@ fn test_approve_course_immediately_after_init_rejected() {
     let treasury = Address::generate(&env);
     let instructor = Address::generate(&env);
 
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
     client.init(
         &admin, &sec_admin, &treasury, &20u32, &50u32, &1000u32, &17_280u32,
     );
@@ -8889,7 +8889,7 @@ fn test_approve_course_after_init_governance_window_succeeds() {
     let env = Env::default();
     env.mock_all_auths();
 
-    let contract_id = env.register(HamplardContract, ());
+    let contract_id = env.register(SorobanLardContract, ());
     let token_admin = Address::generate(&env);
     let token_id = env
         .register_stellar_asset_contract_v2(token_admin)
@@ -8900,7 +8900,7 @@ fn test_approve_course_after_init_governance_window_succeeds() {
     let treasury = Address::generate(&env);
     let instructor = Address::generate(&env);
 
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
     client.init(
         &admin, &sec_admin, &treasury, &20u32, &50u32, &1000u32, &17_280u32,
     );
@@ -8940,7 +8940,7 @@ fn test_approve_course_at_init_governance_window_boundary() {
     let env = Env::default();
     env.mock_all_auths();
 
-    let contract_id = env.register(HamplardContract, ());
+    let contract_id = env.register(SorobanLardContract, ());
     let token_admin = Address::generate(&env);
     let token_id = env
         .register_stellar_asset_contract_v2(token_admin)
@@ -8951,7 +8951,7 @@ fn test_approve_course_at_init_governance_window_boundary() {
     let treasury = Address::generate(&env);
     let instructor = Address::generate(&env);
 
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
     let init_ledger = env.ledger().sequence();
     client.init(
         &admin, &sec_admin, &treasury, &20u32, &50u32, &1000u32, &17_280u32,
@@ -8993,7 +8993,7 @@ fn test_approve_course_init_ledger_stored_correctly() {
     let env = Env::default();
     env.mock_all_auths();
 
-    let contract_id = env.register(HamplardContract, ());
+    let contract_id = env.register(SorobanLardContract, ());
     let token_admin = Address::generate(&env);
     let token_id = env
         .register_stellar_asset_contract_v2(token_admin)
@@ -9003,7 +9003,7 @@ fn test_approve_course_init_ledger_stored_correctly() {
     let sec_admin = Address::generate(&env);
     let treasury = Address::generate(&env);
 
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     // Capture ledger before and after init
     let ledger_before = env.ledger().sequence();
@@ -9024,7 +9024,7 @@ fn test_approve_course_init_ledger_stored_correctly() {
 #[test]
 fn test_fee_preview_matches_actual_enroll_deduction() {
     let (env, contract_id, token_id, admin, _sec_admin, treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
     let token_client = token::Client::new(&env, &token_id);
 
     // Large-payment surcharge of 5% applies to payments above 50 USDC.
@@ -9076,7 +9076,7 @@ fn test_fee_preview_matches_actual_enroll_deduction() {
 #[test]
 fn test_issue_certificate_with_uuid_enrollment_reference() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -9125,7 +9125,7 @@ fn test_issue_certificate_with_uuid_enrollment_reference() {
 #[should_panic(expected = "evidence_hash cannot be empty")]
 fn test_mark_completed_rejects_empty_evidence_hash() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -9153,7 +9153,7 @@ fn test_mark_completed_rejects_empty_evidence_hash() {
 #[test]
 fn test_mark_completed_with_evidence_needs_no_student_signature() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -9197,7 +9197,7 @@ fn test_mark_completed_with_evidence_needs_no_student_signature() {
 #[should_panic(expected = "unauthorized")]
 fn test_get_certificate_denies_third_party_even_with_student_auth() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -9241,7 +9241,7 @@ fn test_get_certificate_denies_third_party_even_with_student_auth() {
 #[test]
 fn test_get_certificate_allows_student_instructor_and_admin() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);
@@ -9289,7 +9289,7 @@ fn test_get_certificate_allows_student_instructor_and_admin() {
 #[should_panic(expected = "instructor is frozen")]
 fn test_frozen_instructor_cannot_set_enrollment_expiry() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     register_and_approve_course(
         &env,
@@ -9312,7 +9312,7 @@ fn test_frozen_instructor_cannot_set_enrollment_expiry() {
 #[test]
 fn test_admin_can_set_enrollment_expiry_for_frozen_instructor() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     register_and_approve_course(
         &env,
@@ -9336,7 +9336,7 @@ fn test_admin_can_set_enrollment_expiry_for_frozen_instructor() {
 #[should_panic(expected = "instructor is frozen")]
 fn test_frozen_instructor_cannot_update_content_hash() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     register_and_approve_course(
         &env,
@@ -9359,7 +9359,7 @@ fn test_frozen_instructor_cannot_update_content_hash() {
 #[test]
 fn test_admin_can_update_content_hash_for_frozen_instructor() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     register_and_approve_course(
         &env,
@@ -9384,7 +9384,7 @@ fn test_admin_can_update_content_hash_for_frozen_instructor() {
 #[should_panic(expected = "instructor is frozen")]
 fn test_frozen_instructor_cannot_set_prerequisite_courses() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     register_and_approve_course(
         &env,
@@ -9408,7 +9408,7 @@ fn test_frozen_instructor_cannot_set_prerequisite_courses() {
 #[should_panic(expected = "instructor is frozen")]
 fn test_frozen_instructor_cannot_unpause_course() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     register_and_approve_course(
         &env,
@@ -9432,7 +9432,7 @@ fn test_frozen_instructor_cannot_unpause_course() {
 #[should_panic(expected = "course_id cannot be empty")]
 fn test_register_course_rejects_empty_course_id() {
     let (env, contract_id, token_id, _admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     client.register_course(
         &instructor,
@@ -9450,7 +9450,7 @@ fn test_register_course_rejects_empty_course_id() {
 #[should_panic(expected = "max_capacity must be greater than zero")]
 fn test_register_course_rejects_zero_max_capacity() {
     let (env, contract_id, token_id, _admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     client.register_course(
         &instructor,
@@ -9468,7 +9468,7 @@ fn test_register_course_rejects_zero_max_capacity() {
 #[should_panic(expected = "max_capacity must be greater than zero")]
 fn test_update_course_rejects_zero_max_capacity() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     register_and_approve_course(
         &env,
@@ -9491,7 +9491,7 @@ fn test_update_course_rejects_zero_max_capacity() {
 #[test]
 fn test_update_course_allows_unlimited_capacity_with_none() {
     let (env, contract_id, token_id, _admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     client.register_course(
         &instructor,
@@ -9540,7 +9540,7 @@ fn advance_below_course_ttl_threshold(env: &Env) {
 #[test]
 fn test_pause_course_extends_course_ttl() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     register_and_approve_course(
         &env,
@@ -9555,21 +9555,21 @@ fn test_pause_course_extends_course_ttl() {
 
     advance_below_course_ttl_threshold(&env);
     assert!(
-        course_ttl(&env, &contract_id, &course_id) < HamplardContract::PERSISTENT_TTL_THRESHOLD
+        course_ttl(&env, &contract_id, &course_id) < SorobanLardContract::PERSISTENT_TTL_THRESHOLD
     );
 
     client.pause_course(&instructor, &course_id);
 
     assert_eq!(
         course_ttl(&env, &contract_id, &course_id),
-        HamplardContract::PERSISTENT_TTL_EXTEND_TO
+        SorobanLardContract::PERSISTENT_TTL_EXTEND_TO
     );
 }
 
 #[test]
 fn test_unpause_course_extends_course_ttl() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     register_and_approve_course(
         &env,
@@ -9585,21 +9585,21 @@ fn test_unpause_course_extends_course_ttl() {
 
     advance_below_course_ttl_threshold(&env);
     assert!(
-        course_ttl(&env, &contract_id, &course_id) < HamplardContract::PERSISTENT_TTL_THRESHOLD
+        course_ttl(&env, &contract_id, &course_id) < SorobanLardContract::PERSISTENT_TTL_THRESHOLD
     );
 
     client.unpause_course(&instructor, &course_id);
 
     assert_eq!(
         course_ttl(&env, &contract_id, &course_id),
-        HamplardContract::PERSISTENT_TTL_EXTEND_TO
+        SorobanLardContract::PERSISTENT_TTL_EXTEND_TO
     );
 }
 
 #[test]
 fn test_reject_course_extends_course_ttl() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let course_id = String::from_str(&env, "COURSE-TTL-REJECT");
     client.register_course(
@@ -9615,7 +9615,7 @@ fn test_reject_course_extends_course_ttl() {
 
     advance_below_course_ttl_threshold(&env);
     assert!(
-        course_ttl(&env, &contract_id, &course_id) < HamplardContract::PERSISTENT_TTL_THRESHOLD
+        course_ttl(&env, &contract_id, &course_id) < SorobanLardContract::PERSISTENT_TTL_THRESHOLD
     );
 
     client.reject_course(
@@ -9626,7 +9626,7 @@ fn test_reject_course_extends_course_ttl() {
 
     assert_eq!(
         course_ttl(&env, &contract_id, &course_id),
-        HamplardContract::PERSISTENT_TTL_EXTEND_TO
+        SorobanLardContract::PERSISTENT_TTL_EXTEND_TO
     );
 }
 
@@ -9639,7 +9639,7 @@ fn test_reject_course_extends_course_ttl() {
 /// certificate that a bulk revocation should be able to reach.
 fn enroll_and_certify(
     env: &Env,
-    client: &HamplardContractClient,
+    client: &SorobanLardContractClient,
     token_id: &Address,
     admin: &Address,
     student: &Address,
@@ -9671,7 +9671,7 @@ fn enroll_and_certify(
 #[test]
 fn test_bulk_revoke_course_certificates_single_certificate() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     register_and_approve_course(
         &env,
@@ -9730,7 +9730,7 @@ fn test_bulk_revoke_course_certificates_single_certificate() {
 #[test]
 fn test_bulk_revoke_course_certificates_revokes_five_certificates() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     register_and_approve_course(
         &env,
@@ -9813,7 +9813,7 @@ fn test_bulk_revoke_course_certificates_revokes_five_certificates() {
 #[test]
 fn test_bulk_revoke_only_affects_target_course() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     register_and_approve_course(
         &env,
@@ -9893,7 +9893,7 @@ fn test_bulk_revoke_only_affects_target_course() {
 #[test]
 fn test_bulk_revoke_skips_already_revoked_certificates() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     register_and_approve_course(
         &env,
@@ -9957,7 +9957,7 @@ fn test_bulk_revoke_skips_already_revoked_certificates() {
 #[test]
 fn test_bulk_revoke_emits_course_certificates_revoked_event() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     register_and_approve_course(
         &env,
@@ -9999,7 +9999,7 @@ fn test_bulk_revoke_emits_course_certificates_revoked_event() {
 #[test]
 fn test_bulk_revoked_certificate_can_still_be_challenged_and_re_revoked() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     register_and_approve_course(
         &env,
@@ -10049,7 +10049,7 @@ fn test_bulk_revoked_certificate_can_still_be_challenged_and_re_revoked() {
 #[should_panic(expected = "unauthorized: bulk_revoke_course_certificates")]
 fn test_bulk_revoke_unauthorized_caller_rejected() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     register_and_approve_course(
         &env,
@@ -10082,7 +10082,7 @@ fn test_bulk_revoke_unauthorized_caller_rejected() {
 #[should_panic(expected = "course not found")]
 fn test_bulk_revoke_unknown_course_rejected() {
     let (env, contract_id, _token_id, admin, _sec_admin, _treasury, _instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     client
         .bulk_revoke_course_certificates(&admin, &String::from_str(&env, "COURSE-DOES-NOT-EXIST"));
@@ -10092,7 +10092,7 @@ fn test_bulk_revoke_unknown_course_rejected() {
 #[should_panic(expected = "no certificates issued for this course")]
 fn test_bulk_revoke_course_without_certificates_rejected() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     register_and_approve_course(
         &env,
@@ -10110,7 +10110,7 @@ fn test_bulk_revoke_course_without_certificates_rejected() {
 #[test]
 fn test_get_course_certificates_empty_for_course_without_issuance() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     register_and_approve_course(
         &env,
@@ -10138,7 +10138,7 @@ fn test_get_course_certificates_empty_for_course_without_issuance() {
 #[should_panic(expected = "withdraw_tokens: amount must be greater than zero")]
 fn test_withdraw_tokens_rejects_zero_amount() {
     let (env, contract_id, token_id, admin, sec_admin, _treasury, _instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
     client.withdraw_tokens(
         &admin,
         &sec_admin,
@@ -10152,7 +10152,7 @@ fn test_withdraw_tokens_rejects_zero_amount() {
 #[should_panic(expected = "withdraw_tokens: amount must be greater than zero")]
 fn test_withdraw_tokens_rejects_negative_amount() {
     let (env, contract_id, token_id, admin, sec_admin, _treasury, _instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
     client.withdraw_tokens(
         &admin,
         &sec_admin,
@@ -10165,7 +10165,7 @@ fn test_withdraw_tokens_rejects_negative_amount() {
 #[test]
 fn test_withdraw_tokens_accepts_positive_amount() {
     let (env, contract_id, token_id, admin, sec_admin, _treasury, _instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
     let token_mint = token::StellarAssetClient::new(&env, &token_id);
     let destination = Address::generate(&env);
     token_mint.mint(&contract_id, &500_000_000i128);
@@ -10190,7 +10190,7 @@ fn test_withdraw_tokens_accepts_positive_amount() {
 #[should_panic(expected = "update_default_fee: new fee is identical to the current fee")]
 fn test_update_default_fee_rejects_same_value() {
     let (env, contract_id, _token_id, admin, _sec_admin, _treasury, _instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
     // Platform was initialised with 20% — calling with 20 again must panic.
     client.update_default_fee(&admin, &20u32);
 }
@@ -10198,7 +10198,7 @@ fn test_update_default_fee_rejects_same_value() {
 #[test]
 fn test_update_default_fee_accepts_different_value() {
     let (env, contract_id, _token_id, admin, _sec_admin, _treasury, _instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
     client.update_default_fee(&admin, &15u32);
     client.update_default_fee(&admin, &25u32);
 }
@@ -10211,7 +10211,7 @@ fn test_update_default_fee_accepts_different_value() {
 #[should_panic(expected = "transfer_admin: cooldown active")]
 fn test_transfer_admin_cooldown_blocks_rapid_rotation() {
     let (env, contract_id, _token_id, admin, sec_admin, _treasury, _instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
     let a1 = Address::generate(&env);
     let s1 = Address::generate(&env);
     client.transfer_admin(&admin, &sec_admin, &a1, &s1);
@@ -10224,7 +10224,7 @@ fn test_transfer_admin_cooldown_blocks_rapid_rotation() {
 #[test]
 fn test_transfer_admin_succeeds_after_cooldown() {
     let (env, contract_id, _token_id, admin, sec_admin, _treasury, _instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
     let a1 = Address::generate(&env);
     let s1 = Address::generate(&env);
     client.transfer_admin(&admin, &sec_admin, &a1, &s1);
@@ -10240,7 +10240,7 @@ fn test_transfer_admin_succeeds_after_cooldown() {
 #[test]
 fn test_transfer_admin_first_call_never_blocked() {
     let (env, contract_id, _token_id, admin, sec_admin, _treasury, _instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
     let a = Address::generate(&env);
     let s = Address::generate(&env);
     // First-ever call — no LastAdminTransferLedger stored; must succeed.
@@ -10255,7 +10255,7 @@ fn test_transfer_admin_first_call_never_blocked() {
 #[should_panic(expected = "course auto-paused after")]
 fn test_circuit_breaker_trips_after_threshold_failures() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
     register_and_approve_course(
         &env,
         &client,
@@ -10281,7 +10281,7 @@ fn test_circuit_breaker_trips_after_threshold_failures() {
 #[test]
 fn test_circuit_breaker_does_not_trip_below_threshold() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
     register_and_approve_course(
         &env,
         &client,
@@ -10321,7 +10321,7 @@ fn test_circuit_breaker_does_not_trip_below_threshold() {
 #[test]
 fn test_circuit_breaker_course_can_be_unpaused_by_instructor() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
     register_and_approve_course(
         &env,
         &client,
@@ -10364,7 +10364,7 @@ fn test_circuit_breaker_course_can_be_unpaused_by_instructor() {
 #[should_panic(expected = "content_hash cannot be all zero bytes")]
 fn test_register_course_rejects_zero_content_hash() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     client.register_course(
         &instructor,
@@ -10381,7 +10381,7 @@ fn test_register_course_rejects_zero_content_hash() {
 #[test]
 fn test_register_course_accepts_non_zero_content_hash() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let non_zero_hash = BytesN::from_array(&env, &[1u8; 32]);
     client.register_course(
@@ -10403,7 +10403,7 @@ fn test_register_course_accepts_non_zero_content_hash() {
 #[test]
 fn test_withdraw_tokens_requires_both_admins() {
     let (env, contract_id, token_id, admin, sec_admin, _treasury, _instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     // Fund the contract with tokens
     let token_client = token::StellarAssetClient::new(&env, &token_id);
@@ -10422,7 +10422,7 @@ fn test_withdraw_tokens_requires_both_admins() {
 #[should_panic(expected = "unauthorized: requires both admin signatures")]
 fn test_withdraw_tokens_rejects_single_admin() {
     let (env, contract_id, token_id, admin, sec_admin, _treasury, _instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let destination = Address::generate(&env);
     let other = Address::generate(&env);
@@ -10437,7 +10437,7 @@ fn test_withdraw_tokens_rejects_single_admin() {
 #[test]
 fn test_mark_completed_extends_enrollment_and_course_ttl() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let course_id = String::from_str(&env, "COURSE-TTL-TEST");
     let student = Address::generate(&env);
@@ -10474,7 +10474,7 @@ fn test_mark_completed_extends_enrollment_and_course_ttl() {
 #[test]
 fn test_issue_certificate_extends_enrollment_ttl() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let course_id = String::from_str(&env, "COURSE-CERT-TTL");
     let student = Address::generate(&env);
@@ -10522,7 +10522,7 @@ fn test_issue_certificate_extends_enrollment_ttl() {
 #[test]
 fn test_list_courses_u32_max_limit_does_not_overflow() {
     let (env, contract_id, token_id, _admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let ids = [
         "COURSE-LIST-A",
@@ -10605,9 +10605,9 @@ fn test_list_courses_u32_max_limit_does_not_overflow() {
 #[test]
 fn test_list_courses_clamps_limit_to_max_page_size() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
-    let catalog_len = HamplardContract::MAX_PAGE_SIZE + 10;
+    let catalog_len = SorobanLardContract::MAX_PAGE_SIZE + 10;
     client.update_max_courses_limit(&admin, &catalog_len);
 
     for i in 0..catalog_len {
@@ -10626,27 +10626,27 @@ fn test_list_courses_clamps_limit_to_max_page_size() {
 
     // A limit above the cap is silently clamped rather than copying the
     // entire remaining catalog in one call.
-    let page = client.list_courses(&0u32, &(HamplardContract::MAX_PAGE_SIZE + 100));
-    assert_eq!(page.len(), HamplardContract::MAX_PAGE_SIZE);
+    let page = client.list_courses(&0u32, &(SorobanLardContract::MAX_PAGE_SIZE + 100));
+    assert_eq!(page.len(), SorobanLardContract::MAX_PAGE_SIZE);
     assert_eq!(
         page.get(0).unwrap(),
         String::from_str(&env, "COURSE-PAGE-000")
     );
     assert_eq!(
-        page.get(HamplardContract::MAX_PAGE_SIZE - 1).unwrap(),
+        page.get(SorobanLardContract::MAX_PAGE_SIZE - 1).unwrap(),
         String::from_str(
             &env,
-            &format!("COURSE-PAGE-{:03}", HamplardContract::MAX_PAGE_SIZE - 1)
+            &format!("COURSE-PAGE-{:03}", SorobanLardContract::MAX_PAGE_SIZE - 1)
         )
     );
 
-    let rest = client.list_courses(&HamplardContract::MAX_PAGE_SIZE, &u32::MAX);
+    let rest = client.list_courses(&SorobanLardContract::MAX_PAGE_SIZE, &u32::MAX);
     assert_eq!(rest.len(), 10);
     assert_eq!(
         rest.get(0).unwrap(),
         String::from_str(
             &env,
-            &format!("COURSE-PAGE-{:03}", HamplardContract::MAX_PAGE_SIZE)
+            &format!("COURSE-PAGE-{:03}", SorobanLardContract::MAX_PAGE_SIZE)
         )
     );
 
@@ -10663,7 +10663,7 @@ fn test_list_courses_clamps_limit_to_max_page_size() {
 /// student, and return the enrolled student address.
 fn setup_arbitration(
     env: &Env,
-    client: &HamplardContractClient,
+    client: &SorobanLardContractClient,
     token_id: &Address,
     admin: &Address,
     instructor: &Address,
@@ -10682,7 +10682,7 @@ fn setup_arbitration(
 #[test]
 fn test_escalation_creates_retrievable_arbitration_case() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let fee_per_case = 5_000_000i128;
     let course_id_str = "COURSE-ARB-255";
@@ -10708,7 +10708,7 @@ fn test_escalation_creates_retrievable_arbitration_case() {
 #[should_panic(expected = "arbitration case already open for this dispute")]
 fn test_duplicate_escalation_rejected() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = setup_arbitration(
         &env, &client, &token_id, &admin, &instructor, "COURSE-ARB-257", 5_000_000,
@@ -10726,7 +10726,7 @@ fn test_duplicate_escalation_rejected() {
 #[test]
 fn test_resolve_arbitration_refund_to_student() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let fee_per_case = 5_000_000i128;
     let student = setup_arbitration(
@@ -10755,7 +10755,7 @@ fn test_resolve_arbitration_refund_to_student() {
 #[test]
 fn test_resolve_arbitration_payout_to_instructor() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let fee_per_case = 5_000_000i128;
     let student = setup_arbitration(
@@ -10789,7 +10789,7 @@ fn test_resolve_arbitration_payout_to_instructor() {
 #[test]
 fn test_process_refund_archives_enrollment_to_history() {
     let (env, contract_id, token_id, admin, _sec_admin, _treasury, instructor) = setup();
-    let client = HamplardContractClient::new(&env, &contract_id);
+    let client = SorobanLardContractClient::new(&env, &contract_id);
 
     let student = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_id).mint(&student, &100_000_000_000);

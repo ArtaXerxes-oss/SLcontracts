@@ -643,7 +643,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "hamplard"
+name = "sorobanlard"
 version = "0.1.0"
 dependencies = [
  "soroban-sdk",

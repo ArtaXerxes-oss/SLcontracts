@@ -1,4 +1,4 @@
-//! # Hamplard Contract — Security Model
+//! # SorobanLard Contract — Security Model
 //!
 //! ## Trust Hierarchy
 //!
@@ -600,10 +600,10 @@ pub struct PendingUpgrade {
 // ============================================================
 
 #[contract]
-pub struct HamplardContract;
+pub struct SorobanLardContract;
 
 #[contractimpl]
-impl HamplardContract {
+impl SorobanLardContract {
     /// Minimum ledgers before instance storage TTL extension is triggered (~1 year)
     const INSTANCE_TTL_THRESHOLD: u32 = 6_000_000;
     const INSTANCE_TTL_EXTEND_TO: u32 = 6_300_000;
